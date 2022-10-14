@@ -19,6 +19,8 @@ async def create_cup(session: Session = Depends(db.session)):
     session.refresh(new_cup)
     return new_cup
 
+
+# 컵 상태 체크 대여상태면 반납
 @router.patch('/state',response_model=CupsInfo)
 async def cup_state_cheack(request: CupId,session: Session = Depends(db.session)):
     ''''''
@@ -27,9 +29,11 @@ async def cup_state_cheack(request: CupId,session: Session = Depends(db.session)
         raise cup_fail()
     cup_state =cup.first().status
 
+    # 대여가능이면 available 반환 
     if cup_state == CupsSataeType.available:
         return cup.first()
 
+    # 로스컵이라면 변환후 returned반환
     if cup_state == CupsSataeType.loss:
         cup.update({
             Cups.user_id : 1,
@@ -39,6 +43,7 @@ async def cup_state_cheack(request: CupId,session: Session = Depends(db.session)
         session.commit()
         return cup.first()
 
+    # 대여중 컵이라면 변환후 returned 반환
     if cup_state == CupsSataeType.using:
         cup.update({
             Cups.user_id : 1,
@@ -47,9 +52,11 @@ async def cup_state_cheack(request: CupId,session: Session = Depends(db.session)
         }) 
         session.commit()
         return cup.first()
-    
+        
+    # 컵 인식 실패
     raise cup_fail()
 
+#컵 대여
 @router.post('/rent')
 async def cup_rent(request:CupIdAndUserId,session: Session = Depends(db.session)):
     ''''''
